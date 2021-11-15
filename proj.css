@@ -1,0 +1,111 @@
+body {
+  margin: 0;
+  text-align: center;
+  background-color: lightgreen;
+}
+
+.navbar_home {
+  width: auto;
+  margin: 0;
+  background-color: white;
+  box-shadow: 0px -2px 10px 1px;
+}
+
+.navbar_home button {
+  background-color: white;
+  width: 33%;
+  border: none;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-family: Comic Sans MS, Comic Sans, cursive;
+  font-size: auto;
+}
+
+.navbar_home button:hover{
+  background-color: lightgray;
+}
+
+.impact_form, .details {
+  background-color: white;
+  text-align: center;
+  margin: 60px auto;
+  width: 60%;
+  box-shadow: 0px 0px 10px 1px;
+  padding: 5px 30px 30px 30px;
+}
+
+.recent_quakes {
+  background-color: white;
+  text-align: center;
+  margin: 50px auto;
+  width: 90%;
+  box-shadow: 0px 0px 10px 1px;
+  padding: 5px 30px 30px 30px;
+}
+
+.findquake {
+  background-color: white;
+  text-align: center;
+  margin: 50px auto;
+  width: 90%;
+  box-shadow: 0px 0px 10px 1px;
+  padding: 5px 30px 30px 30px;
+}
+
+.descrip_box {
+  background-color: white;
+  text-align: center;
+  margin: 30px auto;
+  width: 90%;
+  box-shadow: 0px 0px 10px 1px;
+  padding: 10px 20px 10px 20px;
+  font-size: 40px;
+}
+
+.impact_submit {
+  width: 25px;
+}
+
+.impact_form input[type=text] {
+  resize: vertical;
+  vertical-align: text-top;
+}
+
+.impact_form input {
+  width: 200px;
+}
+
+button {
+  padding: 5px;
+  background-color: lightgray;
+  border-color: black;
+  border-radius: 5px;
+  font-family: Comic Sans MS, Comic Sans, cursive;
+  font-size: 15px;
+}
+
+button:hover {
+  background-color: #6699CC;
+}
+
+table {
+  text-align: center;
+  font-family: Comic Sans MS, Comic Sans, cursive;
+  border: 2px solid black;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  border: 2px solid black;
+  padding: 5px;
+  background-color: lightgray;
+}
+
+td {
+  border: 1px solid black;
+}
+
+tr:hover {
+  background-color: #A8EAFF;
+}
