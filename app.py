@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy 
+from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
 
@@ -8,7 +8,7 @@ moment = Moment(app)
 db = SQLAlchemy(app)
 
 migration = Migrate(app, db)
- 
+
 class City(db.Model):
     __tablename__ = 'City'
     id = db.Column(db.Integer, primary_key=True)
@@ -59,7 +59,7 @@ db.create_all()
 db.session.commit()
 
 @app.route('/')
- 
+
 def index():
 #    return "Hello, welcome to the coolest zone!"
     return render_template('mainpage.html')
