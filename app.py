@@ -64,6 +64,7 @@ def index():
 #    return "Hello, welcome to the coolest zone!"
     return render_template('mainpage.html')
 
+@app.route('/impactsave')
 def create_impact_record():
     record = Impact_Record()
     record.rating = 10

@@ -112,7 +112,7 @@ class ImpactComponent extends React.Component {
     const comments = this.state.comments;
     fetch(sendimpact, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'Csrf-Token': csrfToken},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({city, st, eq_date, rating, comments})
     }).then(res => res.json()).then(data => {
       if(data) {
