@@ -113,14 +113,14 @@ class ImpactComponent extends React.Component {
     fetch(sendimpact, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({city, st, eq_date, rating, comments})
+      body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})
     }).then(res => res.json()).then(data => {
       if(data) {
         //clear form
       } else {
         //indicate error
       }
-    })
+    });
   }
 
   render() {
@@ -153,6 +153,17 @@ class FindQuakeComponent extends React.Component {
     client.connect();
     //use city table to convert name to lat, long
     //query = client.query("SELECT latitude, longitude FROM City WHERE name = ${city} AND state = ${st}")
+    fetch(findbyloc, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({this.state.city, this.state.st})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        //clear form
+      } else {
+        //indicate error
+      }
+    });
 
     long = 0//find city epicenter_longitude
     lat = 0//find city epicenter_latitude
