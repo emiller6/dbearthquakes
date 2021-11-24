@@ -3,24 +3,34 @@
 const ce = React.createElement;
 const csrfToken = document.getElementById("csrfToken").value;
 const sendimpact = document.getElementById("sendimpact").value;
+const getRecentHome = document.getElementById("recentshome").value;
+const findbydate = document.getElementById("searchbydate").value;
+const findbyloc = document.getElementById("searchbyloc").value;
+const findbyid = document.getElementById("searchbyid").value;
 
 class EarthquakesMainComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {page: "H"};
+    this.state = {page: "H", eq_id: ""};
     this.handlePageChange = this.handlePageChange.bind(this);
+    this.handleDetails = this.handleDetails.bind(this);
   }
 
   handlePageChange(page){
     this.setState({page});
   }
 
+  handleDetails(page, eq_id){
+    this.setState({page});
+    this.setState({eq_id});
+  }
+
   render() {
     switch(this.state.page) {
-      case "H": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(HomeComponent, {changePage: this.handlePageChange}));
+      case "H": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(HomeComponent, {changePage: this.handleDetails}));
       case "I": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(ImpactComponent));
-      case "F": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(FindQuakeComponent, {changePage: this.handlePageChange}));
-      case "D": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(DetailedViewComponent));
+      case "F": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(FindQuakeComponent, {changePage: this.handleDetails}));
+      case "D": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(DetailedViewComponent, {eq_id: this.state.eq_id}));
       //case "L": return ce('div', null, ce(HeaderComponent, {changePage: this.handlePageChange}), ce(LabComponent));
       case _: return ce('p',null,'FAIL');
     }
@@ -53,11 +63,16 @@ class HomeComponent extends React.Component {
   constructor(props) {
     super(props);
     this.openDetails = this.openDetails.bind(this);
-    this.state = {rqs: [{index: 1, epicenter_longitude: 10, epicenter_latitude: 20, datetime: "10/7/21 10:50AM", magnitude: 3, depth: 2.2}]}
+    this.state = {eq_id: "", rqs: [{index: 1, epicenter_longitude: 10, epicenter_latitude: 20, datetime: "10/7/21 10:50AM", magnitude: 3, depth: 2.2}]}
   }
 
   openDetails(e, str) {
-    this.props.changePage(str);
+    this.setState({eq_id: e.target['key']});
+    this.props.changePage(str, this.state.eq_id);
+  }
+
+  componentDidMount() {
+    fetch(getRecentHome).then(res => res.json()).then(data => this.setState({reqs: data}));
   }
 
   render() {
@@ -97,7 +112,7 @@ class HomeComponent extends React.Component {
 class ImpactComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {city: "", state_loc: "", eq_date: "", rating: "", comments: ""}
+    this.state = {city: "", state_loc: "", eq_date: "", rating: "", comments: "", error: ""}
   }
 
   typingHandler(e) {
@@ -116,9 +131,13 @@ class ImpactComponent extends React.Component {
       body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})
     }).then(res => res.json()).then(data => {
       if(data) {
-        //clear form
+        this.setState({city: ""});
+        this.setState({state_loc: ""});
+        this.setState({eq_date: ""});
+        this.setState({rating: ""});
+        this.setState({comments: ""});
       } else {
-        //indicate error
+        this.setState({error: "SUBMISSION FAILED, PLEASE TRY AGAIN"});
       }
     });
   }
@@ -132,7 +151,8 @@ class ImpactComponent extends React.Component {
       ce('br'), 'Rate the Effects: ', ce('br'),
       'No Impact', ce('input',{type: "range", min: 1, max: 5, value: this.state.rating, onChange: e => this.typingHandler(e)}), 'Heavy Damages', ce('br'),
       ce('br'), 'Description: ', ce('input',{type: "text", id: "comments", value: this.state.comments, onChange: e => this.typingHandler(e)}),
-      ce('br'), ce('br'), ce('button', {onClick: e => this.addImpact(e)}, 'Submit')
+      ce('br'), ce('br'), ce('button', {onClick: e => this.addImpact(e)}, 'Submit'),
+      ce('span',{id: "error-submit"}, this.state.error)
     );
   }
 }
@@ -141,7 +161,7 @@ class FindQuakeComponent extends React.Component {
   constructor(props) {
     super(props);
     this.openDetails = this.openDetails.bind(this);
-    this.state = {date: "", tablename: "Recent Earthquakes", city: "", st: "", rqs: [{index: 1, epicenter_longitude: 10, epicenter_latitude: 20, datetime: "10/7/21 10:50AM", magnitude: 3, depth: 2.2}]}
+    this.state = {eq_id: "", error: "", date: "", tablename: "Recent Earthquakes", city: "", st: "", rqs: [{index: 1, epicenter_longitude: 10, epicenter_latitude: 20, datetime: "10/7/21 10:50AM", magnitude: 3, depth: 2.2}]}
   }
 
   typingHandler(e) {
@@ -149,38 +169,47 @@ class FindQuakeComponent extends React.Component {
   }
 
   findQuakesByLocation(e) {
-    this.state.tablename = 'Search Results';
-    client.connect();
-    //use city table to convert name to lat, long
-    //query = client.query("SELECT latitude, longitude FROM City WHERE name = ${city} AND state = ${st}")
+    this.setState({tablename: 'Search Results'});
     fetch(findbyloc, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({this.state.city, this.state.st})
     }).then(res => res.json()).then(data => {
       if(data) {
-        //clear form
+        this.setState({rqs: data});
+        this.setState({city: ""});
+        this.setState({st: ""});
       } else {
-        //indicate error
+        this.setState({error: "No results found."});
+        this.setState({rqs: []});
       }
     });
+  }
 
-    long = 0//find city epicenter_longitude
-    lat = 0//find city epicenter_latitude
+  findQuakesByDate(e) {
+    this.setState({tablename: 'Search Results'});
+    fetch(findbydate, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({this.state.date})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        this.setState({rqs: data});
+        this.setState({date: ""});
+      } else {
+        this.setState({error: "No results found."});
+        this.setState({rqs: []});
+      }
+    });
+  }
 
-    //populate table with earthquake data related to search results
-    //query = client.query("SELECT * FROM Earthquake WHERE epicenter_longitude<=${long} AND epicenter_longitude>=${long} AND epicenter_latitude<=${lat} AND epicenter_latitude>=${lat}");
-
-    //get results
-    //query.on("row", function(row, result){
-      //result.addRow(row);
-    //});
-
-    //client.end();
+  componentDidMount() {
+    fetch(getRecentHome).then(res => res.json()).then(data => this.setState({reqs: data}));
   }
 
   openDetails(e, str) {
-    this.props.changePage(str);
+    this.setState({eq_id: e.target['key']});
+    this.props.changePage(str, this.state.eq_id);
   }
 
   render() {
@@ -197,6 +226,7 @@ class FindQuakeComponent extends React.Component {
       ce('button', {onClick: e => this.findQuakesByLocation(e)}, 'Search'),
       //Table of recent earthquakes
       ce('h2',null,this.state.tablename),
+      ce('span',{id: "search_error"},this.state.error),
       ce('table', {className: "recentq"},
         ce('tbody',null ,
           ce('tr',null,
@@ -226,11 +256,21 @@ class FindQuakeComponent extends React.Component {
 class DetailedViewComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", state: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+    this.state = {eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", state: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
   }
 
   componentDidMount() {
+    fetch(findbyid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({this.state.eq_id})
+    }).then(res => res.json()).then(data => {
+      this.splitInfo(data)
+    });
+  }
 
+  splitInfo(data){
+    this.setState({datetime: ""});
   }
 
   render() {
