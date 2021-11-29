@@ -1,7 +1,7 @@
 "use strict"
 
 const ce = React.createElement;
-const csrfToken = document.getElementById("csrfToken").value;
+//const csrfToken = document.getElementById("csrfToken").value;
 const sendimpact = document.getElementById("sendimpact").value;
 const getRecentHome = document.getElementById("recentshome").value;
 const findbydate = document.getElementById("searchbydate").value;
@@ -128,7 +128,9 @@ class ImpactComponent extends React.Component {
     fetch(sendimpact, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})
+//      body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})      
+//      body: JSON.stringify({city: city, state: st, date: eq_date, rating: rating, comments: comments})
+        body: JSON.stringify({x: 5})
     }).then(res => res.json()).then(data => {
       if(data) {
         this.setState({city: ""});
@@ -173,7 +175,7 @@ class FindQuakeComponent extends React.Component {
     fetch(findbyloc, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({this.state.city, this.state.st})
+      body: JSON.stringify({this:state.city, this:state.st})
     }).then(res => res.json()).then(data => {
       if(data) {
         this.setState({rqs: data});
@@ -191,7 +193,7 @@ class FindQuakeComponent extends React.Component {
     fetch(findbydate, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({this.state.date})
+      body: JSON.stringify({this:state.date})
     }).then(res => res.json()).then(data => {
       if(data) {
         this.setState({rqs: data});
@@ -263,7 +265,7 @@ class DetailedViewComponent extends React.Component {
     fetch(findbyid, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({this.state.eq_id})
+      body: JSON.stringify({this:state.eq_id})
     }).then(res => res.json()).then(data => {
       this.splitInfo(data)
     });

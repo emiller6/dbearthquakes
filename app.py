@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
+import json
 
 app = Flask(__name__)
 moment = Moment(app)
@@ -62,22 +63,28 @@ db.session.commit()
 
 def index():
 #    return "Hello, welcome to the coolest zone!"
+    print("Accessed HTML")
     return render_template('mainpage.html')
 
-@app.route('/impactsave')
+@app.route('/impactsave', methods = ['POST'])
 def create_impact_record():
+    print("Starting JSON exchange")
+    todo_data = request.get_json()
+#    jsdata = request.form['sendimpact']
+#    parsed = json.loads(jsdata)
+#    print(json.dumps(parsed, indent=4, sort_keys=True))
+    print("Ending JSON exchange")
+    print(todo_data['x'])
     record = Impact_Record()
     record.rating = 10
     record.comments = "Very bad do not do"
 
     try:
-        print("Heyoy")
         db.session.add(record)
         db.session.commit()
         # on successful db insert, flash success
 #        flash('Artist ' + request.form['name'] + ' was successfully listed!')
     except:
-        print("Leyoy")
         db.session.rollback()
     # TODO: on unsuccessful db insert, flash an error instead.
     #flash('An error occurred. Artist ' + new_artist.name + ' could not be listed.')
