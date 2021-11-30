@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
 import json
+import csv
 
 app = Flask(__name__)
 moment = Moment(app)
@@ -24,7 +25,8 @@ class Earthquake(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     epicenter_longitide = db.Column(db.Numeric(20,20), nullable=False)
     epicenter_latitude = db.Column(db.Numeric(20,20), nullable=False)
-    time = db.Column(db.DateTime, nullable=False)
+#    time = db.Column(db.DateTime, nullable=False)
+    time = db.Column(db.String(40), nullable=False)
     magnitude = db.Column(db.Numeric(20,20), nullable=False)
     depth = db.Column(db.Numeric(20,20), nullable=False)
 
@@ -59,25 +61,88 @@ class Originates(db.Model):
 db.create_all()
 db.session.commit()
 
+def loadCities():
+    print("Starting Cities Load")
+    with open('cities.txt') as csv_file:
+     csv_reader = csv.reader(csv_file, delimiter=',')
+     line_count = 0
+     for row in csv_reader:
+         if line_count == 0:
+             line_count += 1
+         else:
+             print(f'{row[0]}, {row[1]}, {row[2]}, {row[3]}, {row[4]}')
+             new_city = City()
+             new_city.name = row[0]
+             new_city.population = row[1]
+             new_city.state = row[2]
+             new_city.latitude = row[3]
+             new_city.longitide = row[4]
+             db.session.add(new_city)
+             db.session.commit()
+             db.session.close()
+             rs = City.query.get(line_count)
+             print(rs.latitude)
+             line_count += 1
+     print(line_count)
+     print("Ending Cities Loading")
+
+def loadQuakes():
+    print("Starting Quakes Load")
+    with open('quakes.txt') as csv_file:
+     csv_reader = csv.reader(csv_file, delimiter=',')
+     line_count = 0
+     for row in csv_reader:
+         if line_count == 0:
+             line_count += 1
+         else:
+             print(f'{row[0]}, {row[1]}, {row[2]}, {row[3]}, {row[4]}')
+             new_quake = Earthquake()
+             new_quake.epicenter_latitude = row[0]
+             new_quake.epicenter_longitide = row[1]
+             new_quake.time = row[2]
+             new_quake.magnitude = row[3]
+             new_quake.depth = row[4]
+             db.session.add(new_quake)
+             db.session.commit()
+             db.session.close()
+             rs = Earthquake.query.get(line_count)
+             print(rs.magnitude)
+             line_count += 1
+     print("Ending Quakes Loading")
+
+def buildAffects():
+    print("Yee")
+    quakes = City.query.all()
+    for quake in quakes:
+        print(quake.id)
+    print("Yuh")
+
+@app.before_first_request
+def do_something_only_once():
+    print("Yes")
+    loadCities()
+    loadQuakes()
+    buildAffects()
+
 @app.route('/')
 
 def index():
-#    return "Hello, welcome to the coolest zone!"
+
     print("Accessed HTML")
     return render_template('mainpage.html')
 
 @app.route('/impactsave', methods = ['POST'])
 def create_impact_record():
-    print("Starting JSON exchange")
-    todo_data = request.get_json()
+    print("SStarting JSON exchange")
+    jsdata = request.get_json()
 #    jsdata = request.form['sendimpact']
 #    parsed = json.loads(jsdata)
 #    print(json.dumps(parsed, indent=4, sort_keys=True))
     print("Ending JSON exchange")
-    print(todo_data['x'])
+    print(jsdata['comments'])
     record = Impact_Record()
-    record.rating = 10
-    record.comments = "Very bad do not do"
+    record.rating = 5
+    record.comments = jsdata['comments']
 
     try:
         db.session.add(record)
@@ -92,5 +157,7 @@ def create_impact_record():
         db.session.close()
 
     rs = Impact_Record.query.get(1)
-    com = rs.comments
-    return com
+    com = rs.id
+    print("Added to db: ")
+    print(com)
+    return "Success"

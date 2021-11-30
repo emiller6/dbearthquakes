@@ -1,0 +1,4 @@
+name,pop,state,lat,lon
+San Francisco,900000,CA,37.7749,122.4194
+Los Angeles,4000000,CA,34.0522,118.2437
+San Diego,1410000,CA,32.7157,117.1611

@@ -129,8 +129,8 @@ class ImpactComponent extends React.Component {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
 //      body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})      
-//      body: JSON.stringify({city: city, state: st, date: eq_date, rating: rating, comments: comments})
-        body: JSON.stringify({x: 5})
+      body: JSON.stringify({city: city, state: st, date: eq_date, rating: rating, comments: comments})
+//        body: JSON.stringify({city: city,})
     }).then(res => res.json()).then(data => {
       if(data) {
         this.setState({city: ""});
