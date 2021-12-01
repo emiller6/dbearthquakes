@@ -52,7 +52,7 @@ class HeaderComponent extends React.Component {
         ce('nav',{className: "navbar_home"},
           ce('button', {onClick: e => this.handleChange(e,"H")}, 'Home'),
           ce('button', {onClick: e => this.handleChange(e,"F")}, 'Find an Earthquake'),
-          ce('button', {onClick: e => this.handleChange(e,"I")}, 'Submit an Impact Report')
+          ce('button', {onClick: e => this.handleChange(e,"I")}, 'Submit an Impact Report'),
           //ce('button', {onClick: e => this.handleChange(e,"L")}, 'Laboratory View')
         )
     );
@@ -72,7 +72,8 @@ class HomeComponent extends React.Component {
   }
 
   componentDidMount() {
-    fetch(getRecentHome).then(res => res.json()).then(data => this.setState({reqs: data}));
+    this.setState({eq_id: "1"});
+    //fetch(getRecentHome).then(res => res.json()).then(data => this.setState({reqs: data}));
   }
 
   render() {
@@ -108,6 +109,7 @@ class HomeComponent extends React.Component {
     );
   }
 }
+
 
 class ImpactComponent extends React.Component {
   constructor(props) {
@@ -256,35 +258,51 @@ class FindQuakeComponent extends React.Component {
 class DetailedViewComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", state: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+    this.state = {valid: False, eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
   }
 
   componentDidMount() {
-    fetch(findbyid, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({this.state.eq_id})
-    }).then(res => res.json()).then(data => {
-      this.splitInfo(data)
-    });
+    this.setState({mag: "2"});
   }
 
   splitInfo(data){
     this.setState({datetime: ""});
   }
 
+  allowEdits(e){
+    this.setState({valid: True});
+  }
+
   render() {
-    return ce('div', {className: "details"},
+    if(valid){
+      return ce('div', {className: "details"},
+      ce('h2', null, 'Earthquake Details'),
+      ce('h3', null, 'Date and Time of Event: '), ce('input', {type:"text", id: "datetime", value: this.state.datetime,  onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Magnitude:'), ce('input', {type: "text", id: "mag", value: this.state.mag, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Depth:'), ce('input', {type: "text", id: "depth", value: this.state.depth, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Location of Epicenter:'), ce('input', {type: "text", id: "city", value: this.state.city, onChange: e => this.typingHandler(e)}), ce('p', null, ', '), ce('input', {type: "text", id: "st", value: this.state.st, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Predicted Impact:'), ce('input', {type: "text", id: "predicted", value: this.state.predicted, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
+      ce('h3', null, 'Impact Reviews:'),
+      ce('button', null, 'Delete Record'),
+      ce('button', null, 'Update Record')
+      );
+    } else {
+      return ce('div', {className: "details"},
       ce('h2', null, 'Earthquake Details'),
       ce('h3', null, 'Date and Time of Event: '), ce('p', null, this.state.datetime),
       ce('h3', null, 'Magnitude:'), ce('p', null, this.state.mag),
       ce('h3', null, 'Depth:'), ce('p', null, this.state.depth),
-      ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.state),
+      ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.st),
       ce('h3', null, 'Predicted Impact:'), ce('p', null, this.state.predicted),
       ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
-      ce('h3', null, 'Impact Reviews:')
-      //Date/time, magnitude, depth, city, state, predicted impact, ratings average, comments
-    )
+      ce('h3', null, 'Impact Reviews:'),
+      ce('div', {className: "LabEdits"},
+        ce('h2', null, 'Please enter your verification code to edit or delete earthquake data:'),
+        ce('input', {type: "text", id: "id_code", value: this.state.id_code, onChange: e => this.typingHandler(e)}),
+        ce('button',{onClick: e => allowEdits(e)},'Submit'))
+      );
+    }
   }
 }
 
