@@ -7,6 +7,8 @@ const getRecentHome = document.getElementById("recentshome").value;
 const findbydate = document.getElementById("searchbydate").value;
 const findbyloc = document.getElementById("searchbyloc").value;
 const findbyid = document.getElementById("searchbyid").value;
+const deletebyid = document.getElementById("deletebyid").value;
+const updatebyid = document.getElementById("updatebyid").value;
 
 class EarthquakesMainComponent extends React.Component {
   constructor(props) {
@@ -128,7 +130,7 @@ class ImpactComponent extends React.Component {
     fetch(sendimpact, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-//      body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})      
+//      body: JSON.stringify({"city": city, "state": st, "date": eq_date, "rating": rating, "comments": comments})
       body: JSON.stringify({city: city, state: st, date: eq_date, rating: rating, comments: comments})
 //        body: JSON.stringify({city: city,})
     }).then(res => res.json()).then(data => {
@@ -258,7 +260,11 @@ class FindQuakeComponent extends React.Component {
 class DetailedViewComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", state: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+    this.state = {error: "", valid: 0, eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+  }
+
+  typingHandler(e) {
+    this.setState({[e.target['id']]: e.target.value});
   }
 
   componentDidMount() {
@@ -267,26 +273,105 @@ class DetailedViewComponent extends React.Component {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({this:state.eq_id})
     }).then(res => res.json()).then(data => {
-      this.splitInfo(data)
+      if(data) {
+        this.setState({datetime: data});
+        this.setState({mag: ""});
+        this.setState({depth: ""});
+        this.setState({city: ""});
+        this.setState({state: ""});
+        this.setState({predicted: ""});
+        this.setState({avgrating: ""});
+        this.setState({comments: ""});
+        this.setState({error: ""});
+      } else {
+        this.setState({error: "No results found."});
+        this.setState({datetime: ""});
+        this.setState({mag: ""});
+        this.setState({depth: ""});
+        this.setState({city: ""});
+        this.setState({state: ""});
+        this.setState({predicted: ""});
+        this.setState({avgrating: ""});
+        this.setState({comments: ""});
+      }
     });
   }
 
-  splitInfo(data){
-    this.setState({datetime: ""});
+  allowEdits(e){
+    this.setState({valid: 1});
+  }
+
+  delete(e){
+    fetch(deletebyid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({this:state.eq_id})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        this.setState({error: "Record deleted."});
+        this.setState({datetime: ""});
+        this.setState({mag: ""});
+        this.setState({depth: ""});
+        this.setState({city: ""});
+        this.setState({state: ""});
+        this.setState({predicted: ""});
+        this.setState({avgrating: ""});
+        this.setState({comments: ""});
+        this.setState({valid: 0});
+      } else {
+        this.setState({error: "Error: Record not deleted."});
+      }
+    });
+  }
+
+  update(e){
+    fetch(updatebyid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({this:state.eq_id, this:state.datetime, this:state.mag, this:state.depth, this:state.city, this:state.st, this:state.predicted})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        this.setState({error: "Updates saved."});
+        this.setState({valid: 0});
+      } else {
+        this.setState({error: "Error: Record not updated."});
+      }
+    });
   }
 
   render() {
-    return ce('div', {className: "details"},
+    if(this.state.valid){
+      return ce('div', {className: "details"},
       ce('h2', null, 'Earthquake Details'),
+      ce('h3', null, this.state.error),
+      ce('h3', null, 'Date and Time of Event: '), ce('input', {type:"text", id: "datetime", value: this.state.datetime,  onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Magnitude:'), ce('input', {type: "text", id: "mag", value: this.state.mag, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Depth:'), ce('input', {type: "text", id: "depth", value: this.state.depth, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Location of Epicenter:'), ce('input', {type: "text", id: "city", value: this.state.city, onChange: e => this.typingHandler(e)}), ce('p', null, ', '), ce('input', {type: "text", id: "st", value: this.state.st, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Predicted Impact:'), ce('input', {type: "text", id: "predicted", value: this.state.predicted, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
+      ce('h3', null, 'Impact Reviews:'),
+      ce('button', {onClick: e => this.delete(e)}, 'Delete Record'),
+      ce('button', {onClick: e => this.update(e)}, 'Update Record')
+      );
+    } else {
+      return ce('div', null,
+      ce('div', {className: "details"},
+      ce('h2', null, 'Earthquake Details'),
+      ce('h3', null, this.state.error),
       ce('h3', null, 'Date and Time of Event: '), ce('p', null, this.state.datetime),
       ce('h3', null, 'Magnitude:'), ce('p', null, this.state.mag),
       ce('h3', null, 'Depth:'), ce('p', null, this.state.depth),
-      ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.state),
+      ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.st),
       ce('h3', null, 'Predicted Impact:'), ce('p', null, this.state.predicted),
       ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
-      ce('h3', null, 'Impact Reviews:')
-      //Date/time, magnitude, depth, city, state, predicted impact, ratings average, comments
-    )
+      ce('h3', null, 'Impact Reviews:')),
+      ce('div', {className: "LabEdits"},
+        ce('h2', null, 'Please enter your verification code to edit or delete earthquake data:'),
+        ce('input', {type: "text", id: "id_code", value: this.state.id_code, onChange: e => this.typingHandler(e)}),
+        ce('button',{onClick: e => this.allowEdits(e)},'Submit'))
+      );
+    }
   }
 }
 

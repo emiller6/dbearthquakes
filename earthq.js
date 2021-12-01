@@ -1,7 +1,7 @@
 "use strict"
 
 const ce = React.createElement;
-const csrfToken = document.getElementById("csrfToken").value;
+//const csrfToken = document.getElementById("csrfToken").value;
 const sendimpact = document.getElementById("sendimpact").value;
 const getRecentHome = document.getElementById("recentshome").value;
 const findbydate = document.getElementById("searchbydate").value;
