@@ -282,7 +282,6 @@ class DetailedViewComponent extends React.Component {
   }
 
   componentDidMount() {
-    this.setState({tablename: 'Search Results'});
     fetch(findbyid, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -308,6 +307,36 @@ class DetailedViewComponent extends React.Component {
     }
   }
 
+  update(e){
+    fetch(findbyid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({eq_id: this.state.eq_id})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        this.setState({rqs: data['data']});
+      } else {
+        this.setState({error: "No results found."});
+        this.setState({rqs: []});
+      }
+    });
+  }
+
+  delete(e){
+    fetch(deletebyid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({eq_id: this.state.eq_id})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        this.setState({rqs: data['data']});
+      } else {
+        this.setState({error: "No results found."});
+        this.setState({rqs: []});
+      }
+    });
+  }
+
   render() {
     if(this.valid){
       return ce('div', {className: "details"},
@@ -319,8 +348,8 @@ class DetailedViewComponent extends React.Component {
       ce('h3', null, 'Predicted Impact:'), ce('input', {type: "text", id: "predicted", value: this.state.predicted, onChange: e => this.typingHandler(e)}),
       ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
       ce('h3', null, 'Impact Reviews:'),
-      ce('button', null, 'Delete Record'),
-      ce('button', null, 'Update Record')
+      ce('button', {onClick: e => this.delete(e)}, 'Delete Record'),
+      ce('button', {onClick: e => this.update(e)}, 'Update Record')
       );
     } else {
       return ce('div', {className: "details"},
