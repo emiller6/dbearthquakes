@@ -68,7 +68,7 @@ class HomeComponent extends React.Component {
 
   openDetails(e, str) {
     this.setState({eq_id: e.target['key']});
-    this.props.changePage(str, this.state.eq_id);   
+    this.props.changePage(str, this.state.eq_id);
   }
 
   componentDidMount() {
@@ -76,15 +76,15 @@ class HomeComponent extends React.Component {
     fetch(getRecentHome, {
       method: 'GET',
       headers: {'Content-Type': 'application/json'},
-    }).then(res => res.json()).then(data => this.setState({reqs: data}));
+    }).then(res => res.json()).then(data => {
+      this.setState({rqs: data['data']})});
     console.log(2);
 //    var newData = this.state.rqs.concat([this.state.rqs]);
 //    this.setState({rqs: newData});
-    console.log(this.state.rqs);
-
   }
 
   render() {
+    console.log(this.state.rqs);
     return ce('div',{className: "main_page"},
       ce('div', {className: "descrip_box"},
         ce('h2',null,'Welcome to the Earthquake Database!')
@@ -126,6 +126,7 @@ class ImpactComponent extends React.Component {
   }
 
   typingHandler(e) {
+    console.log(e.target.value);
     this.setState({[e.target['id']]: e.target.value});
   }
 
@@ -158,8 +159,8 @@ class ImpactComponent extends React.Component {
       'City: ', ce('input',{type: "text", id: "city", value: this.state.city, onChange: e => this.typingHandler(e)}), ce('br'),
       'State: ', ce('input',{type: "text", id: "state_loc", value: this.state.state_loc, onChange: e => this.typingHandler(e)}), ce('br'),
       'Date: ', ce('input',{type: "datetime-local", id: "eq_date", value: this.state.eq_date, onChange: e => this.typingHandler(e)}), ce('br'),
-      ce('br'), 'Rate the Effects: ', ce('br'),
-      'No Impact', ce('input',{type: "range", min: 1, max: 5, value: this.state.rating, onChange: e => this.typingHandler(e)}), 'Heavy Damages', ce('br'),
+      Rate the Effects (1 (no damage) to 5 (heavy damage)): ',
+      ce('input',{type: "number", min: 1, max: 5, id: "rating", value: this.state.rating, onChange: e => this.typingHandler(e)}),
       ce('br'), 'Description: ', ce('input',{type: "text", id: "comments", value: this.state.comments, onChange: e => this.typingHandler(e)}),
       ce('br'), ce('br'), ce('button', {onClick: e => this.addImpact(e)}, 'Submit'),
       ce('span',{id: "error-submit"}, this.state.error)
@@ -178,6 +179,14 @@ class FindQuakeComponent extends React.Component {
     this.setState({[e.target['id']]: e.target.value});
   }
 
+  findQuakes(e) {
+    if(this.state.date == ""){
+      this.findQuakesByLocation(e);
+    } else {
+      this.findQuakesByDate(e);
+    }
+  }
+
   findQuakesByLocation(e) {
     this.setState({tablename: 'Search Results'});
     fetch(findbyloc, {
@@ -186,9 +195,7 @@ class FindQuakeComponent extends React.Component {
       body: JSON.stringify({city: this.state.city, state: this.state.st})
     }).then(res => res.json()).then(data => {
       if(data) {
-        this.setState({rqs: data});
-        this.setState({city: ""});
-        this.setState({st: ""});
+        this.setState({rqs: data['data']});
       } else {
         this.setState({error: "No results found."});
         this.setState({rqs: []});
@@ -204,8 +211,7 @@ class FindQuakeComponent extends React.Component {
       body: JSON.stringify({datetime: this.state.date})
     }).then(res => res.json()).then(data => {
       if(data) {
-        this.setState({rqs: data});
-        this.setState({date: ""});
+        this.setState({rqs: data['data']});
       } else {
         this.setState({error: "No results found."});
         this.setState({rqs: []});
@@ -214,7 +220,8 @@ class FindQuakeComponent extends React.Component {
   }
 
   componentDidMount() {
-    fetch(getRecentHome).then(res => res.json()).then(data => this.setState({reqs: data}));
+    fetch(getRecentHome).then(res => res.json()).then(data => this.setState({rqs: data['data']}));
+
   }
 
   openDetails(e, str) {
@@ -233,7 +240,7 @@ class FindQuakeComponent extends React.Component {
       ce('input',{type: "text", id: "city", value: this.state.city, onChange: e => this.typingHandler(e)}),
       ' and State: ',
       ce('input',{type: "text", id: "st", value: this.state.st, onChange: e => this.typingHandler(e)}), '\t\t',
-      ce('button', {onClick: e => this.findQuakesByLocation(e)}, 'Search'),
+      ce('button', {onClick: e => this.findQuakes(e)}, 'Search'),
       //Table of recent earthquakes
       ce('h2',null,this.state.tablename),
       ce('span',{id: "search_error"},this.state.error),
@@ -266,7 +273,7 @@ class FindQuakeComponent extends React.Component {
 class DetailedViewComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {valid: false, eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+    this.state = {valid: false, rqs: [], eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
   }
 
 
@@ -275,7 +282,19 @@ class DetailedViewComponent extends React.Component {
   }
 
   componentDidMount() {
-    this.setState({mag: "2"});
+    this.setState({tablename: 'Search Results'});
+    fetch(findbyid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({eq_id: this.state.eq_id})
+    }).then(res => res.json()).then(data => {
+      if(data) {
+        this.setState({rqs: data['data']});
+      } else {
+        this.setState({error: "No results found."});
+        this.setState({rqs: []});
+      }
+    });
   }
 
   splitInfo(data){
