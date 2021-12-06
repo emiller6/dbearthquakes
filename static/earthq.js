@@ -319,7 +319,9 @@ class DetailedViewComponent extends React.Component {
   }
 
   allowEdits(e){
-    if(this.state.id_code = "valid123"){
+    console.log(this.state.id_code);
+    if(this.state.id_code == "valid123"){
+      console.log("here");
       this.setState({valid: true});
     }
   }
@@ -328,7 +330,7 @@ class DetailedViewComponent extends React.Component {
     fetch(updatebyid, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({eq_id: this.state.eq_id, datetime: this.state.datetime, mag: this.state.mag, depth: this.state.depth, city: this.state.city, st: this.state.st, predicted: this.state.predicted})
+      body: JSON.stringify({eq_id: this.state.eq_id, datetime: this.state.datetime, mag: this.state.mag, depth: this.state.depth})
     }).then(res => res.json()).then(data => {
       if(data) {
         this.setState({valid: false});
@@ -363,15 +365,15 @@ class DetailedViewComponent extends React.Component {
   }
 
   render() {
-    if(this.valid){
+    if(this.state.valid){
       return ce('div', {className: "details"},
       ce('h2', null, 'Earthquake Details'),
       ce('h2', null, this.state.error),
       ce('h3', null, 'Date and Time of Event: '), ce('input', {type:"text", id: "datetime", value: this.state.datetime,  onChange: e => this.typingHandler(e)}),
       ce('h3', null, 'Magnitude:'), ce('input', {type: "text", id: "mag", value: this.state.mag, onChange: e => this.typingHandler(e)}),
       ce('h3', null, 'Depth:'), ce('input', {type: "text", id: "depth", value: this.state.depth, onChange: e => this.typingHandler(e)}),
-      ce('h3', null, 'Location of Epicenter:'), ce('input', {type: "text", id: "city", value: this.state.city, onChange: e => this.typingHandler(e)}), ce('p', null, ', '), ce('input', {type: "text", id: "st", value: this.state.st, onChange: e => this.typingHandler(e)}),
-      ce('h3', null, 'Predicted Impact:'), ce('input', {type: "text", id: "predicted", value: this.state.predicted, onChange: e => this.typingHandler(e)}),
+      ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.st),
+      ce('h3', null, 'Predicted Impact:'), ce('p', null, this.state.predicted),
       ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
       ce('h3', null, 'Impact Reviews:'),
       ce('button', {onClick: e => this.delete(e)}, 'Delete Record'),
