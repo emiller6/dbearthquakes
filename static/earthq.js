@@ -7,6 +7,8 @@ const getRecentHome = document.getElementById("recentshome").value;
 const findbydate = document.getElementById("searchbydate").value;
 const findbyloc = document.getElementById("searchbyloc").value;
 const findbyid = document.getElementById("searchbyid").value;
+const updatebyid = document.getElementById("updatebyid").value;
+const deletebyid = document.getElementById("deletebyid").value;
 
 class EarthquakesMainComponent extends React.Component {
   constructor(props) {
@@ -68,6 +70,7 @@ class HomeComponent extends React.Component {
 
   openDetails(e, str) {
     this.setState({eq_id: e.target['key']});
+    console.log(this.state.eq_id);
     this.props.changePage(str, this.state.eq_id);
   }
 
@@ -159,7 +162,7 @@ class ImpactComponent extends React.Component {
       'City: ', ce('input',{type: "text", id: "city", value: this.state.city, onChange: e => this.typingHandler(e)}), ce('br'),
       'State: ', ce('input',{type: "text", id: "state_loc", value: this.state.state_loc, onChange: e => this.typingHandler(e)}), ce('br'),
       'Date: ', ce('input',{type: "datetime-local", id: "eq_date", value: this.state.eq_date, onChange: e => this.typingHandler(e)}), ce('br'),
-      Rate the Effects (1 (no damage) to 5 (heavy damage)): ',
+      'Rate the Effects (1 (no damage) to 5 (heavy damage)): ',
       ce('input',{type: "number", min: 1, max: 5, id: "rating", value: this.state.rating, onChange: e => this.typingHandler(e)}),
       ce('br'), 'Description: ', ce('input',{type: "text", id: "comments", value: this.state.comments, onChange: e => this.typingHandler(e)}),
       ce('br'), ce('br'), ce('button', {onClick: e => this.addImpact(e)}, 'Submit'),
@@ -273,7 +276,7 @@ class FindQuakeComponent extends React.Component {
 class DetailedViewComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {valid: false, rqs: [], eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+    this.state = {error: "", valid: false, rqs: [], eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
   }
 
 
@@ -302,22 +305,18 @@ class DetailedViewComponent extends React.Component {
 
   allowEdits(e){
     this.setState({valid: true});
-    if(true){
-      print("A");
-    }
   }
 
   update(e){
-    fetch(findbyid, {
+    fetch(updatebyid, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({eq_id: this.state.eq_id})
+      body: JSON.stringify({eq_id: this.state.eq_id, datetime: this.state.datetime, mag: this.state.mag, depth: this.state.depth, city: this.state.city, st: this.state.st, predicted: this.state.predicted})
     }).then(res => res.json()).then(data => {
       if(data) {
-        this.setState({rqs: data['data']});
+        this.setState({valid: false});
       } else {
-        this.setState({error: "No results found."});
-        this.setState({rqs: []});
+        this.setState({error: "Update failed."});
       }
     });
   }
@@ -329,10 +328,19 @@ class DetailedViewComponent extends React.Component {
       body: JSON.stringify({eq_id: this.state.eq_id})
     }).then(res => res.json()).then(data => {
       if(data) {
-        this.setState({rqs: data['data']});
-      } else {
-        this.setState({error: "No results found."});
+        this.setState({valid: false});
         this.setState({rqs: []});
+        this.setState({eq_id: ""});
+        this.setState({datetime: ""});
+        this.setState({mag: ""});
+        this.setState({depth: ""});
+        this.setState({city: ""});
+        this.setState({st: ""});
+        this.setState({predicted: ""});
+        this.setState({avgrating: ""});
+        this.setState({comments: []});
+      } else {
+        this.setState({error: "Cannot delete."});
       }
     });
   }
@@ -341,6 +349,7 @@ class DetailedViewComponent extends React.Component {
     if(this.valid){
       return ce('div', {className: "details"},
       ce('h2', null, 'Earthquake Details'),
+      ce('h2', null, this.state.error),
       ce('h3', null, 'Date and Time of Event: '), ce('input', {type:"text", id: "datetime", value: this.state.datetime,  onChange: e => this.typingHandler(e)}),
       ce('h3', null, 'Magnitude:'), ce('input', {type: "text", id: "mag", value: this.state.mag, onChange: e => this.typingHandler(e)}),
       ce('h3', null, 'Depth:'), ce('input', {type: "text", id: "depth", value: this.state.depth, onChange: e => this.typingHandler(e)}),
@@ -354,6 +363,7 @@ class DetailedViewComponent extends React.Component {
     } else {
       return ce('div', {className: "details"},
       ce('h2', null, 'Earthquake Details'),
+      ce('h2', null, this.state.error),
       ce('h3', null, 'Date and Time of Event: '), ce('p', null, this.state.datetime),
       ce('h3', null, 'Magnitude:'), ce('p', null, this.state.mag),
       ce('h3', null, 'Depth:'), ce('p', null, this.state.depth),
