@@ -279,7 +279,7 @@ class FindQuakeComponent extends React.Component {
 class DetailedViewComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {error: "", valid: false, rqs: [], eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
+    this.state = {error: "", id_code: "", valid: false, rqs: [], eq_id: props.eq_id, datetime: "2012", mag: "10", depth: "3", city: "Los Angeles", st: "CA", predicted: "4.2", avgrating: "3.7", comments: []};
   }
 
 
@@ -298,6 +298,16 @@ class DetailedViewComponent extends React.Component {
     }).then(res => res.json()).then(data => {
       if(data) {
         this.setState({rqs: data['data']});
+        this.setState({valid: false});
+        this.setState({eq_id: this.state.rqs(0).index});
+        this.setState({datetime: this.state.rqs(0).index});
+        this.setState({mag: this.state.rqs(0).magnitude});
+        this.setState({depth: this.state.rqs(0).depth});
+        this.setState({city: this.state.rqs(0).city});
+        this.setState({st: this.state.rqs(0).state});
+        this.setState({predicted: this.state.rqs(0).pred_impact});
+        this.setState({avgrating: this.state.rqs(0).cur_impact});
+        this.setState({comments: this.state.rqs(0).comments});
       } else {
         this.setState({error: "No results found."});
         this.setState({rqs: []});
@@ -305,12 +315,10 @@ class DetailedViewComponent extends React.Component {
     });
   }
 
-  splitInfo(data){
-    this.setState({datetime: ""});
-  }
-
   allowEdits(e){
-    this.setState({valid: true});
+    if(this.state.id_code = "valid123"){
+      this.setState({valid: true});
+    }
   }
 
   update(e){
