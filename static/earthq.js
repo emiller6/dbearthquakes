@@ -23,8 +23,10 @@ class EarthquakesMainComponent extends React.Component {
   }
 
   handleDetails(page, eq_id){
-    this.setState({page});
-    this.setState({eq_id});
+    this.setState({eq_id: eq_id}, () => {
+          console.log(this.state.eq_id);
+          this.setState({page});
+    });
   }
 
   render() {
@@ -68,10 +70,10 @@ class HomeComponent extends React.Component {
     this.state = {eq_id: "", rqs: [{index: 1, epicenter_longitude: 20, epicenter_latitude: 20, datetime: "10/7/21 10:50AM", magnitude: 3, depth: 2.2},{index: 2, epicenter_longitude: 10, epicenter_latitude: 20, datetime: "10/7/21 10:50AM", magnitude: 3, depth: 2.2}]}
   }
 
-  openDetails(e, str) {
-    this.setState({eq_id: e.target['key']});
-    console.log(this.state.eq_id);
-    this.props.changePage(str, this.state.eq_id);
+  openDetails(key, str) {
+    console.log(key);
+    console.log(key.index);
+    this.props.changePage(str, key.index);
   }
 
   componentDidMount() {
@@ -105,7 +107,7 @@ class HomeComponent extends React.Component {
             ),
             this.state.rqs.map((quake) => {
               return (
-                ce('tr',{key:quake.index, onClick: e => this.openDetails(e,'D')},
+                ce('tr',{key:quake.index, onClick: () => this.openDetails(quake,'D')},
                   ce('td', null, quake.datetime),
                   ce('td', null, quake.epicenter_longitude),
                   ce('td', null, quake.epicenter_latitude),
@@ -227,9 +229,10 @@ class FindQuakeComponent extends React.Component {
 
   }
 
-  openDetails(e, str) {
-    this.setState({eq_id: e.target['key']});
-    this.props.changePage(str, this.state.eq_id);
+  openDetails(key, str) {
+    console.log(key);
+    console.log(key.index);
+    this.props.changePage(str, key.index);
   }
 
   render() {
@@ -258,7 +261,7 @@ class FindQuakeComponent extends React.Component {
           ),
           this.state.rqs.map((quake) => {
             return (
-              ce('tr',{key:quake.index, onClick: e => this.openDetails(e, 'D')},
+              ce('tr',{key:quake.index, onClick: () => this.openDetails(quake,'D')},
                 ce('td', null, quake.datetime),
                 ce('td', null, quake.epicenter_longitude),
                 ce('td', null, quake.epicenter_latitude),
@@ -285,6 +288,9 @@ class DetailedViewComponent extends React.Component {
   }
 
   componentDidMount() {
+    this.setState({eq_id: this.props.eq_id}, () => {
+          console.log(this.state.eq_id);
+    });
     fetch(findbyid, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
