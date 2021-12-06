@@ -375,7 +375,20 @@ class DetailedViewComponent extends React.Component {
       ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.st),
       ce('h3', null, 'Predicted Impact:'), ce('p', null, this.state.predicted),
       ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
-      ce('h3', null, 'Impact Reviews:'),
+      ce('table', {className: "impact_comments"},
+        ce('tbody',null ,
+          ce('tr',null,
+            ce('th', {key: 0}, "Impact Reviews"),
+          ),
+          this.state.comments.map((cmt, index) => {
+            return (
+              ce('tr',{key:index},
+                ce('td', null, cmt)
+              )
+            )
+          })
+        )
+      ),
       ce('button', {onClick: e => this.delete(e)}, 'Delete Record'),
       ce('button', {onClick: e => this.update(e)}, 'Update Record')
       );
@@ -389,7 +402,20 @@ class DetailedViewComponent extends React.Component {
       ce('h3', null, 'Location of Epicenter:'), ce('p', null, this.state.city, ', ', this.state.st),
       ce('h3', null, 'Predicted Impact:'), ce('p', null, this.state.predicted),
       ce('h3', null, 'Current Average of Ratings Impacts:'), ce('p', null, this.state.avgrating),
-      ce('h3', null, 'Impact Reviews:'),
+      ce('table', {className: "impact_comments"},
+        ce('tbody',null ,
+          ce('tr',null,
+            ce('th', {key: 0}, "Impact Reviews"),
+          ),
+          this.state.comments.map((cmt, index) => {
+            return (
+              ce('tr',{key:index},
+                ce('td', null, cmt)
+              )
+            )
+          })
+        )
+      ),
       ce('div', {className: "LabEdits"},
         ce('h2', null, 'Please enter your verification code to edit or delete earthquake data:'),
         ce('input', {type: "text", id: "id_code", value: this.state.id_code, onChange: e => this.typingHandler(e)}),
