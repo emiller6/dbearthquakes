@@ -263,13 +263,54 @@ def search_by_date():
     goal_time = jsdata['datetime']
     print(goal_time)
     afs = Affects.query.all()
+    goal_time = goal_time[5:7] + "/" + goal_time[8:10] + "/" + goal_time[2:4]
+    print(goal_time)
     found_quakes = []
     for af in afs:
-        if (af.time == goal_time):
+        print(af.time[0:8])
+        if (af.time[0:8] == goal_time[0:8]):
             found_quakes.append(quake_json(af.eq_id))
     quake_list = ",".join(found_quakes)
     dret = '{"data": ['  + quake_list + ']}'
     print(dret)
     return dret
 
+@app.route('/searchid', methods = ['POST'])
+def search_by_id():
+    jsdata = request.get_json() 
+    print(json.dumps(jsdata))
+    quake_id = jsdata['eq_id']
+    print("heree")
+    quake = Earthquake.query.get(1)    
+    data = {}
+    print(quake.id)
+    data['index'] = quake.id
+    data['epicenter_latitude'] = int(quake.epicenter_latitude)
+    data['epicenter_longitude'] = int(quake.epicenter_longitude)
+    data['datetime'] = quake.time
+    data['magnitude'] = int(quake.magnitude)
+    data['depth'] = int(quake.depth)
+    data['city'] = "LA"
+    data['state'] = "CA"
+    data['pred_impact'] = "2.2"
+    data['cur_impact'] = "3.3"
+    com = "Good"
+    coms = "Bad"
+#    coms = '[' + ",".join(com1) + ']'
+    data['comments'] = [com,coms]
+
+    afs = Affects.query.all()
+
+    for af in afs:
+        if (af.eq_id == quake_id):
+            data['location'] = af.name + ", " + af.state
+    
+
+
+
+    dret = {}
+    dret['data'] = data
+
+    print(json.dumps(dret))
+    return dret
 
