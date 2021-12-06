@@ -297,17 +297,20 @@ class DetailedViewComponent extends React.Component {
       body: JSON.stringify({eq_id: this.state.eq_id})
     }).then(res => res.json()).then(data => {
       if(data) {
-        this.setState({rqs: data['data']});
-        this.setState({valid: false});
-        this.setState({eq_id: this.state.rqs(0).index});
-        this.setState({datetime: this.state.rqs(0).index});
-        this.setState({mag: this.state.rqs(0).magnitude});
-        this.setState({depth: this.state.rqs(0).depth});
-        this.setState({city: this.state.rqs(0).city});
-        this.setState({st: this.state.rqs(0).state});
-        this.setState({predicted: this.state.rqs(0).pred_impact});
-        this.setState({avgrating: this.state.rqs(0).cur_impact});
-        this.setState({comments: this.state.rqs(0).comments});
+        this.setState({rqs: data['data']}, () => {
+          console.log(this.state.rqs);
+          this.setState({valid: false});
+          this.setState({eq_id: this.state.rqs.index});
+          this.setState({datetime: this.state.rqs.index});
+          this.setState({mag: this.state.rqs.magnitude});
+          this.setState({depth: this.state.rqs.depth});
+          this.setState({city: this.state.rqs.city});
+          this.setState({st: this.state.rqs.state});
+          this.setState({predicted: this.state.rqs.pred_impact});
+          this.setState({avgrating: this.state.rqs.cur_impact});
+          this.setState({comments: this.state.rqs.comments});
+        });
+
       } else {
         this.setState({error: "No results found."});
         this.setState({rqs: []});
