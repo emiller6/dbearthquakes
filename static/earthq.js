@@ -301,7 +301,7 @@ class DetailedViewComponent extends React.Component {
           console.log(this.state.rqs);
           this.setState({valid: false});
           this.setState({eq_id: this.state.rqs.index});
-          this.setState({datetime: this.state.rqs.index});
+          this.setState({datetime: this.state.rqs.datetime});
           this.setState({mag: this.state.rqs.magnitude});
           this.setState({depth: this.state.rqs.depth});
           this.setState({city: this.state.rqs.city});
