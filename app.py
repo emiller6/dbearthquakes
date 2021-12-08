@@ -177,7 +177,7 @@ def delete_quake(eq_id):
         if (c.eq_id == quake_id):
             db.session.delete(c)
             db.session.commit()
-    print("Ending Delet")
+    print("Ending Delete")
     return "Success"
 
 def update_quake(up_json):
@@ -301,6 +301,8 @@ def search_by_loc():
     dret = '{"data": ['  + quake_list + ']}'
     print(dret)
     return dret
+#maybe use a conn.execute('SELECT eq_id FROM City, Affects WHERE City.name == Affects.name AND City.name == :ci AND City.state == Affects.state AND City.state == :st', {"ci": goal_city, "st": goal_state})
+#then use quake_json with eq_ids to pull quakes?
 
 @app.route('/searchdate', methods = ['POST'])
 def search_by_date():
@@ -460,6 +462,9 @@ def search_by_id():
     print("heree")
     quake = Earthquake.query.get(quake_id)
     data = {}
+#could we do conn.execute('SELECT Affects.eq_id, Earthquake.epicenter_latitude, Earthquake.epicenter_longitude, Earthquake.time, Earthquake.magnitude, Earthquake.depth, Affects.name, Affects.state FROM Earthquake, Affects WHERE Earthquake.id == Affects.eq_id AND Earthquake.id == :id', {"id": eq_id})
+#then for current impact do conn.execute('SELECT Earthquake.id, SUM(Impact_Record.rating) FROM Earthquake, Impact_Record, Causes WHERE Earthquake.id == Causes.eq_id AND Causes.rec_id == Impact_Record.id AND Earthquake.id == :quake GROUP BY Earthquake.id', {"quake": eq_id})
+#could do similar for comments but without sum
     print(quake.id)
     data['index'] = quake.id
     data['epicenter_latitude'] = int(quake.epicenter_latitude)
