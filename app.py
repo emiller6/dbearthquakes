@@ -366,36 +366,48 @@ def calc_pred_impact_db(eq_id):
                                     "FROM similar_cities, Earthquake "
                                     "WHERE Earthquake.id = "+eq_id+" ")
     conn.execute(sim_comp)
-    math_1 = text("UPDATE prev_comparison "
-                    "SET difdep = abs(dep - difdep) ")
+    math_1 = text("CREATE VIEW prev_comparison_2 AS "
+                    "SELECT rate, ABS(dep-difdep) AS difdep, -1*(2*ABS(mag - difmag) + 1*ABS(dep-difdep))+3 AS difmag "
+                    "FROM prev_comparison")
     conn.execute(math_1)
-    math_2 = text("UPDATE prev_comparison "
-                    "SET difmag = -1*(2*abs(mag - difmag) + 1*difdep)+3 ")
-    conn.execute(math_2)
-    math_3 = text("UPDATE prev_comparison "
-                    "SET rate = rate*difmag ")
+    math_3 = text("CREATE VIEW prev_comparison_3 AS "
+                    "SELECT rate*difmag AS rate, difmag "
+                    "FROM prev_comparison_2")
     conn.execute(math_3)
-    math_1 = text("UPDATE sim_comparison "
-                    "SET difdep = abs(dep - difdep) ")
+    math_1 = text("CREATE VIEW sim_comparison_2 AS "
+                    "SELECT rate, ABS(dep-difdep) AS difdep, -1*(2*ABS(mag - difmag) + 1*ABS(dep-difdep))+3 AS difmag "
+                    "FROM sim_comparison")
     conn.execute(math_1)
-    math_2 = text("UPDATE sim_comparison "
-                    "SET difmag = -1*(2*abs(mag - difmag) + 1*difdep)+3 ")
-    conn.execute(math_2)
-    math_3 = text("UPDATE sim_comparison "
-                    "SET rate = rate*difmag ")
+    math_3 = text("CREATE VIEW sim_comparison_3 AS "
+                    "SELECT rate*difmag AS rate, difmag "
+                    "FROM sim_comparison_2")
     conn.execute(math_3)
     p1 = text("SELECT SUM(rate) "
-                "FROM sim_comparison")
+                "FROM sim_comparison_3")
     sim_num = conn.execute(p1).fetchall()
+    print(sim_num)
     p2 = text("SELECT SUM(difmag) "
-                "FROM sim_comparison")
+                "FROM sim_comparison_3")
     sim_den = conn.execute(p2).fetchall()
+    print(sim_den)
     p3 = text("SELECT SUM(rate) "
-                "FROM prev_comparison")
+                "FROM prev_comparison_3")
     prev_num = conn.execute(p3).fetchall()
+    print(prev_num)
     p4 = text("SELECT SUM(difmag) "
-                "FROM prev_comparison")
+                "FROM prev_comparison_3")
     prev_den = conn.execute(p4).fetchall()
+    print(prev_den)
+    db.session.commit()
+    conn.execute('DROP VIEW avg_impacts')
+    conn.execute('DROP VIEW similar_cities')
+    conn.execute('DROP VIEW prev_quakes')
+    conn.execute('DROP VIEW sim_comparison')
+    conn.execute('DROP VIEW prev_comparison')
+    conn.execute('DROP VIEW sim_comparison_2')
+    conn.execute('DROP VIEW prev_comparison_2')
+    conn.execute('DROP VIEW sim_comparison_3')
+    conn.execute('DROP VIEW prev_comparison_3')
     db.session.commit()
     return (sim_num/sim_den)*0.25 + 0.75*(prev_num/prev_den)
 
