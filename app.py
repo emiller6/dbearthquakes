@@ -111,6 +111,50 @@ def loadQuakes():
              line_count += 1
      print("Ending Quakes Loading")
 
+def loadRecords():
+    print("Starting Records Load")
+    with open('records.txt') as csv_file:
+     csv_reader = csv.reader(csv_file, delimiter=',')
+     line_count = 0
+     for row in csv_reader:
+         if line_count == 0:
+             line_count += 1
+         else:
+             print(f'{row[0]}, {row[1]}, {row[2]}, {row[3]}, {row[4]}')
+             new_record = Impact_Record()
+             new_record.rating = row[0]
+             new_record.comments = row[1]
+             im_date = row[2]
+             im_city = row[3]
+             im_state = row[4]
+             db.session.add(new_record)
+             db.session.commit()
+#             db.session.close()
+             rs = Impact_Record.query.get(line_count)
+             record_id = rs.id
+             print(rs.comments)
+             afs = Affects.query.all()
+             for af in afs:
+
+                if (af.time[0:8] == im_date and af.name == im_city and af.state == im_state and record_id != 0):
+                    print("Mathing Game")
+                    new_cause = Causes()
+                    new_cause.eq_id = af.eq_id
+                    new_cause.time = af.time
+                    new_cause.rec_id = record_id
+                    db.session.add(new_cause)
+                    db.session.commit()
+
+                    new_origin = Originates()
+                    new_origin.name = af.name
+                    new_origin.state = af.state
+                    new_origin.rec_id = record_id
+                    db.session.add(new_origin)
+                    db.session.commit()
+
+             line_count += 1
+     print("Ending Records Loading")
+
 def buildAffects():
     print("Yee")
     quakes = Earthquake.query.all()
@@ -137,6 +181,7 @@ def do_something_only_once():
     loadCities()
     loadQuakes()
     buildAffects()
+    loadRecords()
 
 @app.route('/')
 
@@ -284,6 +329,16 @@ def get_recent_quakes():
 #    jst = json.dumps(ret)
     return j
 
+def search_by_loc_db(goal_city,goal_state):
+    res = conn.execute('SELECT eq_id FROM City, Affects WHERE City.name == Affects.name AND City.name == :ci AND City.state == Affects.state AND City.state == :st', {"ci": goal_city, "st": goal_state}).fetchall()
+    print("Shennanigcans")
+    found_quakes = []
+    for r in res:
+        found_quakes.append(quake_json(r[0]))
+    quake_list = ",".join(found_quakes)
+    dret = '{"data": ['  + quake_list + ']}'
+    return dret
+
 @app.route('/searchloc', methods = ['POST'])
 def search_by_loc():
     jsdata = request.get_json()
@@ -292,6 +347,7 @@ def search_by_loc():
 
     print(goal_city)
     print(goal_state)
+    db_lookup = search_by_loc_db(goal_city,goal_state)
     afs = Affects.query.all()
     found_quakes = []
     for af in afs:
@@ -300,7 +356,7 @@ def search_by_loc():
     quake_list = ",".join(found_quakes)
     dret = '{"data": ['  + quake_list + ']}'
     print(dret)
-    return dret
+    return db_lookup
 #maybe use a conn.execute('SELECT eq_id FROM City, Affects WHERE City.name == Affects.name AND City.name == :ci AND City.state == Affects.state AND City.state == :st', {"ci": goal_city, "st": goal_state})
 #then use quake_json with eq_ids to pull quakes?
 
@@ -417,7 +473,11 @@ def calc_pred_impact_db(eq_id):
     conn.execute('DROP VIEW sim_comparison_3')
     conn.execute('DROP VIEW prev_comparison_3')
     db.session.commit()
-    return (sim_num/sim_den)*0.25 + 0.75*(prev_num/prev_den)
+    sim_num_ret = sim_num[0][0]
+    sim_den_ret = sim_den[0][0]
+    prev_num_ret = prev_num[0][0]
+    prev_den_ret = prev_den[0][0]
+    return (sim_num_ret/sim_den_ret)*0.20 + 0.70*(prev_num_ret/prev_den_ret)
 
 def calc_pred_impact(eq_id):
     quake = Earthquake.query.get(eq_id)
@@ -486,6 +546,7 @@ def search_by_id():
 #could we do conn.execute('SELECT Affects.eq_id, Earthquake.epicenter_latitude, Earthquake.epicenter_longitude, Earthquake.time, Earthquake.magnitude, Earthquake.depth, Affects.name, Affects.state FROM Earthquake, Affects WHERE Earthquake.id == Affects.eq_id AND Earthquake.id == :id', {"id": eq_id})
 #then for current impact do conn.execute('SELECT Earthquake.id, SUM(Impact_Record.rating) FROM Earthquake, Impact_Record, Causes WHERE Earthquake.id == Causes.eq_id AND Causes.rec_id == Impact_Record.id AND Earthquake.id == :quake GROUP BY Earthquake.id', {"quake": eq_id})
 #could do similar for comments but without sum
+    eq_id = quake.id
     print(quake.id)
     data['index'] = quake.id
     data['epicenter_latitude'] = int(quake.epicenter_latitude)
@@ -496,6 +557,7 @@ def search_by_id():
     data['city'] = "LA"
     data['state'] = "CA"
     data['pred_impact'] = calc_pred_impact_db(quake_id)
+ #   data['pred_impact'] = 3
     data['cur_impact'] = calc_pred_impact(quake_id)
     com = "Good"
     coms = "Bad"

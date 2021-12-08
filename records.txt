@@ -1,0 +1,9 @@
+rating,comments,date,city,state
+4,Damaging,10/07/21,San Francisco,CA
+5,Lots of Damage,10/07/21,San Francisco,CA
+1,Little Damage,10/08/21,Los Angeles,CA
+2,Felt Nothing,10/08/21,Los Angeles,CA
+1,No Problems,10/09/21,San Diego,CA
+5,Big Problems,10/09/21,San Diego,CA
+3,Glass Broken,10/10/21,San Diego,CA
+3,Broken Glass,10/10/21,San Diego,CA
