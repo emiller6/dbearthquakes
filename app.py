@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, Response, flash, redirect, ur
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
+from sqlalchemy.sql import text
 import json
 import csv
 
 app = Flask(__name__)
 moment = Moment(app)
 db = SQLAlchemy(app)
-
+conn = db.session
 migration = Migrate(app, db)
 
 class City(db.Model):
@@ -159,22 +160,22 @@ def quake_json(eq_id):
     print(json.dumps(data))
     print("End lookup")
     return json.dumps(data)
-    
+
 def delete_quake(eq_id):
     print("Starting Delet")
     quake_id = eq_id
     deleted_quake = Earthquake.query.get(eq_id)
     db.session.delete(deleted_quake)
     db.session.commit()
-    afs = Affects.query.all()   
+    afs = Affects.query.all()
     for af in afs:
         if (af.eq_id == quake_id):
-            db.session.delete(af) 
+            db.session.delete(af)
             db.session.commit()
-    cs = Causes.query.all()   
+    cs = Causes.query.all()
     for c in cs:
         if (c.eq_id == quake_id):
-            db.session.delete(c) 
+            db.session.delete(c)
             db.session.commit()
     print("Ending Delet")
     return "Success"
@@ -186,7 +187,7 @@ def update_quake(up_json):
 #    quake.epicenter_longitude = up_json['epicenter_longitude']
     quake.time = up_json['datetime']
     quake.magnitude = up_json['mag']
-    quake.depth = up_json['depth']   
+    quake.depth = up_json['depth']
     db.session.commit()
 
 
@@ -220,7 +221,7 @@ def create_impact_record():
     #flash('An error occurred. Artist ' + new_artist.name + ' could not be listed.')
 #    finally:
 #        db.session.close()
-    
+
     record_id = 0
     irs = Impact_Record.query.all()
     for ir in irs:
@@ -285,10 +286,10 @@ def get_recent_quakes():
 
 @app.route('/searchloc', methods = ['POST'])
 def search_by_loc():
-    jsdata = request.get_json() 
+    jsdata = request.get_json()
     goal_city = jsdata['city']
     goal_state = jsdata['state']
- 
+
     print(goal_city)
     print(goal_state)
     afs = Affects.query.all()
@@ -303,7 +304,7 @@ def search_by_loc():
 
 @app.route('/searchdate', methods = ['POST'])
 def search_by_date():
-    jsdata = request.get_json() 
+    jsdata = request.get_json()
     goal_time = jsdata['datetime']
     print(goal_time)
     afs = Affects.query.all()
@@ -318,6 +319,66 @@ def search_by_date():
     dret = '{"data": ['  + quake_list + ']}'
     print(dret)
     return dret
+
+def calc_pred_impact_db(eq_id):
+    avg_impacts_by_quake = text("CREATE VIEW avg_impacts AS "
+                                    "SELECT eq_id, AVG(rating) AS Rate "
+                                    "FROM Impact_Record, Causes "
+                                    "WHERE rec_id = Impact_Record.id "
+                                    "GROUP BY Causes.eq_id ")
+    conn.execute(avg_impacts_by_quake)
+    sim_cities = text("CREATE VIEW similar_cities AS "
+                                    "SELECT magnitude, depth, rate "
+                                    "FROM City, Affects, Earthquake, avg_impacts "
+                                    "WHERE ... ")
+    conn.execute(sim_cities)
+    prev_quakes = text("CREATE VIEW prev_quakes AS "
+                                    "SELECT magnitude, depth, rate "
+                                    "FROM City, Affects, Earthquake, avg_impacts "
+                                    "WHERE ... ")
+    conn.execute(prev_quakes)
+    prev_comp = text("CREATE VIEW prev_comparison AS "
+                                    "SELECT prev_quakes.magnitude AS mag, prev_quakes.depth AS dep, Earthquake.magnitude AS difmag, Earthquake.depth AS difdep, prev_quakes.rate AS rate "
+                                    "FROM prev_quakes, Earthquake "
+                                    "WHERE ... ")
+    conn.execute(prev_comp)
+    sim_comp = text("CREATE VIEW sim_comparison AS "
+                                    "SELECT similar_cities.magnitude AS mag, similar_cities.depth AS dep, Earthquake.magnitude AS difmag, Earthquake.depth AS difdep, similar_cities.rate AS rate "
+                                    "FROM similar_cities, Earthquake "
+                                    "WHERE ... ")
+    conn.execute(sim_comp)
+    math_1 = text("UPDATE prev_comparison "
+                    "SET difdep = abs(dep - difdep) ")
+    conn.execute(math_1)
+    math_2 = text("UPDATE prev_comparison "
+                    "SET difmag = -1*(2*abs(mag - difmag) + 1*difdep)+3 ")
+    conn.execute(math_2)
+    math_3 = text("UPDATE prev_comparison "
+                    "SET rate = rate*difmag ")
+    conn.execute(math_3)
+    math_1 = text("UPDATE sim_comparison "
+                    "SET difdep = abs(dep - difdep) ")
+    conn.execute(math_1)
+    math_2 = text("UPDATE sim_comparison "
+                    "SET difmag = -1*(2*abs(mag - difmag) + 1*difdep)+3 ")
+    conn.execute(math_2)
+    math_3 = text("UPDATE sim_comparison "
+                    "SET rate = rate*difmag ")
+    conn.execute(math_3)
+    p1 = text("SELECT SUM(rate) "
+                "FROM sim_comparison")
+    sim_num = conn.execute(p1).fetchall()
+    p2 = text("SELECT SUM(difmag) "
+                "FROM sim_comparison")
+    sim_den = conn.execute(p2).fetchall()
+    p3 = text("SELECT SUM(rate) "
+                "FROM prev_comparison")
+    prev_num = conn.execute(p3).fetchall()
+    p4 = text("SELECT SUM(difmag) "
+                "FROM prev_comparison")
+    prev_den = conn.execute(p4).fetchall()
+    db.session.commit()
+    return (sim_num/sim_den)*0.25 + 0.75*(prev_num/prev_den)
 
 def calc_pred_impact(eq_id):
     quake = Earthquake.query.get(eq_id)
@@ -345,7 +406,7 @@ def calc_pred_impact(eq_id):
     for a in find_my_city_affects:
         if(a.eq_id == eq_id):
             my_city_name = a.name + a.state
-    
+
     my_city = Affects.query.get(1)
     find_my_city = City.query.all()
     for c in find_my_city:
@@ -362,7 +423,7 @@ def calc_pred_impact(eq_id):
         right_place_lon = abs(c.longitude - my_city.longitude) < 20
         if(right_size and right_place_lat and right_place_lon):
             similar_cities.append(c.name + c.state)
-    
+
     sim_city_quake_check = Affects.query.all()
     for af in sim_city_quake_check:
         if(similar_cities.count(af.name + af.state) > 0):
@@ -377,11 +438,11 @@ def calc_pred_impact(eq_id):
 
 @app.route('/searchid', methods = ['POST'])
 def search_by_id():
-    jsdata = request.get_json() 
+    jsdata = request.get_json()
     print(json.dumps(jsdata))
     quake_id = jsdata['eq_id']
     print("heree")
-    quake = Earthquake.query.get(quake_id)    
+    quake = Earthquake.query.get(quake_id)
     data = {}
     print(quake.id)
     data['index'] = quake.id
@@ -427,7 +488,7 @@ def search_by_id():
 
 @app.route('/deleteid', methods = ['POST'])
 def delete_by_id():
-    jsdata = request.get_json() 
+    jsdata = request.get_json()
     print(json.dumps(jsdata))
     quake_id = jsdata['eq_id']
     delete_quake(quake_id)
@@ -436,7 +497,7 @@ def delete_by_id():
 
 @app.route('/updateid', methods = ['POST'])
 def update_by_id():
-    jsdata = request.get_json() 
+    jsdata = request.get_json()
     print(json.dumps(jsdata))
 #    quake_id = jsdata['eq_id']
     update_quake(jsdata)
