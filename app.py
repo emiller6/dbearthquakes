@@ -325,9 +325,9 @@ def search_by_date():
 def calc_pred_impact_db(eq_id):
     eq_id = str(eq_id)
     avg_impacts_by_quake = text("CREATE VIEW avg_impacts AS "
-                                    "SELECT eq_id, AVG(rating) AS Rate "
+                                    "SELECT eq_id, AVG(rating) AS rate "
                                     "FROM Impact_Record, Causes "
-                                    "WHERE rec_id == Impact_Record.id "
+                                    "WHERE Causes.rec_id == Impact_Record.id "
                                     "GROUP BY Causes.eq_id ")
     conn.execute(avg_impacts_by_quake)
     sim_cities = text("CREATE VIEW similar_cities AS "
@@ -356,6 +356,13 @@ def calc_pred_impact_db(eq_id):
                                                                                                                                                                                                                                                                                                         "FROM City, Affects "
                                                                                                                                                                                                                                                                                                         "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == "+eq_id+") ")
     conn.execute(prev_quakes)
+    #prev_quakes = text("CREATE VIEW prev_quakes AS "
+    #                                "SELECT magnitude, depth, rate "
+    #                                "FROM City, Affects, Earthquake, avg_impacts "
+    #                                "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == Earthquake.id AND avg_impacts.eq_id == Affects.eq_id ")
+    #conn.execute(prev_quakes)
+    #x = conn.execute('SELECT * FROM prev_quakes').fetchall()
+    #print(x)
     prev_comp = text("CREATE VIEW prev_comparison AS "
                                     "SELECT prev_quakes.magnitude AS mag, prev_quakes.depth AS dep, Earthquake.magnitude AS difmag, Earthquake.depth AS difdep, prev_quakes.rate AS rate "
                                     "FROM prev_quakes, Earthquake "
@@ -382,6 +389,7 @@ def calc_pred_impact_db(eq_id):
                     "SELECT rate*difmag AS rate, difmag "
                     "FROM sim_comparison_2")
     conn.execute(math_3)
+    db.session.commit()
     p1 = text("SELECT SUM(rate) "
                 "FROM sim_comparison_3")
     sim_num = conn.execute(p1).fetchall()
