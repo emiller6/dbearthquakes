@@ -324,29 +324,45 @@ def calc_pred_impact_db(eq_id):
     avg_impacts_by_quake = text("CREATE VIEW avg_impacts AS "
                                     "SELECT eq_id, AVG(rating) AS Rate "
                                     "FROM Impact_Record, Causes "
-                                    "WHERE rec_id = Impact_Record.id "
+                                    "WHERE rec_id == Impact_Record.id "
                                     "GROUP BY Causes.eq_id ")
     conn.execute(avg_impacts_by_quake)
     sim_cities = text("CREATE VIEW similar_cities AS "
                                     "SELECT magnitude, depth, rate "
                                     "FROM City, Affects, Earthquake, avg_impacts "
-                                    "WHERE ... ")
-    conn.execute(sim_cities)
+                                    "WHERE population < (SELECT population  "
+                                                            "FROM City, Affects "
+                                                            "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == :id) + 1000 "
+                                        "AND population > (SELECT population  "
+                                                                "FROM City, Affects "
+                                                                "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == :id) - 1000 "
+                                        "AND latitude < (SELECT latitude  "
+                                                            "FROM City, Affects "
+                                                            "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == :id) + 20 "
+                                        "AND latitude > (SELECT latitude  "
+                                                                "FROM City, Affects "
+                                                                "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == :id) - 20 "
+                                        "AND City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == Earthquake.id AND avg_impacts.eq_id == Affects.eq_id ")
+    conn.execute(sim_cities, {"id": eq_id})
     prev_quakes = text("CREATE VIEW prev_quakes AS "
                                     "SELECT magnitude, depth, rate "
                                     "FROM City, Affects, Earthquake, avg_impacts "
-                                    "WHERE ... ")
-    conn.execute(prev_quakes)
+                                    "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == Earthquake.id AND avg_impacts.eq_id == Affects.eq_id AND City.name = (SELECT City.name  "
+                                                                                                                                                                                        "FROM City, Affects "
+                                                                                                                                                                                        "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == :id) AND City.state = (SELECT City.state  "
+                                                                                                                                                                                                                                                                                                        "FROM City, Affects "
+                                                                                                                                                                                                                                                                                                        "WHERE City.name == Affects.name AND City.state == Affects.state AND Affects.eq_id == :id) ")
+    conn.execute(prev_quakes, {"id": eq_id})
     prev_comp = text("CREATE VIEW prev_comparison AS "
                                     "SELECT prev_quakes.magnitude AS mag, prev_quakes.depth AS dep, Earthquake.magnitude AS difmag, Earthquake.depth AS difdep, prev_quakes.rate AS rate "
                                     "FROM prev_quakes, Earthquake "
-                                    "WHERE ... ")
-    conn.execute(prev_comp)
+                                    "WHERE Earthquake.id = :id ")
+    conn.execute(prev_comp, {"id": eq_id})
     sim_comp = text("CREATE VIEW sim_comparison AS "
                                     "SELECT similar_cities.magnitude AS mag, similar_cities.depth AS dep, Earthquake.magnitude AS difmag, Earthquake.depth AS difdep, similar_cities.rate AS rate "
                                     "FROM similar_cities, Earthquake "
-                                    "WHERE ... ")
-    conn.execute(sim_comp)
+                                    "WHERE Earthquake.id = :id ")
+    conn.execute(sim_comp, {"id": eq_id})
     math_1 = text("UPDATE prev_comparison "
                     "SET difdep = abs(dep - difdep) ")
     conn.execute(math_1)
