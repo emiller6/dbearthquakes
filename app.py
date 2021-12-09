@@ -535,12 +535,60 @@ def calc_pred_impact(eq_id):
 
     return 3
 
+def search_by_id_db(eq_id):
+    dres = conn.execute('SELECT Affects.eq_id, Earthquake.epicenter_latitude, Earthquake.epicenter_longitude, Earthquake.time, Earthquake.magnitude, Earthquake.depth, Affects.name, Affects.state FROM Earthquake, Affects WHERE Earthquake.id == Affects.eq_id AND Earthquake.id == :id', {"id": eq_id}).fetchall()
+    res = dres[0]
+    data = {}
+
+    data['index'] = res[0]
+    data['epicenter_latitude'] = res[1]
+    data['epicenter_longitude'] = res[2]
+    data['datetime'] = res[3]
+    data['magnitude'] = res[4]
+    data['depth'] = res[5]
+    data['city'] = res[6]
+    data['state'] = res[7]
+
+    data['pred_impact'] = calc_pred_impact_db(eq_id)
+    cur_imp_arr = conn.execute('SELECT Earthquake.id, AVG(Impact_Record.rating) FROM Earthquake, Impact_Record, Causes WHERE Earthquake.id == Causes.eq_id AND Causes.rec_id == Impact_Record.id AND Earthquake.id == :quake GROUP BY Earthquake.id', {"quake": eq_id}).fetchall()
+    data['cur_impact'] = cur_imp_arr[0][1]
+    print(cur_imp_arr)
+ #   comments = conn.execute('SELECT Earthquake.id, Impact_Record.rating FROM Earthquake, Impact_Record, Causes WHERE Earthquake.id == Causes.eq_id AND Causes.rec_id == Impact_Record.id AND Earthquake.id == :quake GROUP BY Earthquake.id', {"quake": eq_id}).fetchall()
+ #   comments = conn.execute('SELECT Impact_Record.comments FROM Impact_Record, Causes WHERE Causes.rec_id == Impact_Record.id AND Causes.eq_id == :quake GROUP BY Causes.eq_id', {"quake": eq_id}).fetchall()
+
+    '''
+    comments = []
+    print(comments)
+    all_com = []
+    for comment in comments:
+        all_com.append(comment[0])
+    '''
+
+    all_com = []
+    cs = Causes.query.all()
+    for c in cs:
+        if (c.eq_id == eq_id):
+            all_com.append(Impact_Record.query.get(c.rec_id).comments)
+
+
+    data['comments'] = all_com
+
+
+    dret = {}
+    dret['data'] = data
+
+    print(json.dumps(dret))
+    return dret
+    
+
+
 @app.route('/searchid', methods = ['POST'])
 def search_by_id():
     jsdata = request.get_json()
     print(json.dumps(jsdata))
     quake_id = jsdata['eq_id']
     print("heree")
+    
     quake = Earthquake.query.get(quake_id)
     data = {}
 #could we do conn.execute('SELECT Affects.eq_id, Earthquake.epicenter_latitude, Earthquake.epicenter_longitude, Earthquake.time, Earthquake.magnitude, Earthquake.depth, Affects.name, Affects.state FROM Earthquake, Affects WHERE Earthquake.id == Affects.eq_id AND Earthquake.id == :id', {"id": eq_id})
@@ -588,7 +636,8 @@ def search_by_id():
     dret['data'] = data
 
     print(json.dumps(dret))
-    return dret
+#    return dret
+    return search_by_id_db(quake_id)
 
 @app.route('/deleteid', methods = ['POST'])
 def delete_by_id():
