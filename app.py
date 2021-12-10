@@ -479,7 +479,7 @@ def calc_pred_impact_db(eq_id):
     sim_den_ret = sim_den[0][0]
     prev_num_ret = prev_num[0][0]
     prev_den_ret = prev_den[0][0]
-    return (sim_num_ret/sim_den_ret)*0.20 + 0.70*(prev_num_ret/prev_den_ret)
+    return (sim_num_ret/sim_den_ret)*0.25 + 0.75*(prev_num_ret/prev_den_ret)
 
 def calc_pred_impact(eq_id):
     quake = Earthquake.query.get(eq_id)
