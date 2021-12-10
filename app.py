@@ -288,7 +288,9 @@ def create_impact_record():
         print(af.time[0:8] == im_date)
         print(af.name == im_city)
         print(af.state == im_state)
-        if (af.time[0:8] == im_date and af.name == im_city and af.state == im_state and record_id != 0):
+        goal_time = im_date
+        goal_time = goal_time[5:7] + "/" + goal_time[8:10] + "/" + goal_time[2:4]
+        if (af.time[0:8] == goal_time and af.name == im_city and af.state == im_state and record_id != 0):
             print("Mathing Game")
             new_cause = Causes()
             new_cause.eq_id = af.eq_id
@@ -309,7 +311,7 @@ def create_impact_record():
     com = rs.id
     print("Added to db: ")
     print(com)
-    return "Success"
+    return jsdata
 
 
 @app.route('/getrecents', methods = ['GET'], strict_slashes=False)
@@ -579,7 +581,7 @@ def search_by_id_db(eq_id):
 
     print(json.dumps(dret))
     return dret
-    
+
 
 
 @app.route('/searchid', methods = ['POST'])
@@ -588,7 +590,7 @@ def search_by_id():
     print(json.dumps(jsdata))
     quake_id = jsdata['eq_id']
     print("heree")
-    
+
     quake = Earthquake.query.get(quake_id)
     data = {}
 #could we do conn.execute('SELECT Affects.eq_id, Earthquake.epicenter_latitude, Earthquake.epicenter_longitude, Earthquake.time, Earthquake.magnitude, Earthquake.depth, Affects.name, Affects.state FROM Earthquake, Affects WHERE Earthquake.id == Affects.eq_id AND Earthquake.id == :id', {"id": eq_id})
@@ -645,7 +647,7 @@ def delete_by_id():
     print(json.dumps(jsdata))
     quake_id = jsdata['eq_id']
     delete_quake(quake_id)
-    return "Success"
+    return jsdata
 
 
 @app.route('/updateid', methods = ['POST'])
@@ -654,4 +656,4 @@ def update_by_id():
     print(json.dumps(jsdata))
 #    quake_id = jsdata['eq_id']
     update_quake(jsdata)
-    return "Success"
+    return jsdata
